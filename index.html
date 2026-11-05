@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="si" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Floor Paint Pro - Cloud Management Dashboard</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons CDN -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Sinhala:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script src="./tailwind.config.js"></script>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body class="min-h-full flex flex-col font-sans antialiased text-slate-200 bg-slate-950 select-none sm:select-auto">
+
+  <!-- Toast Notification Center -->
+  <div id="toast" class="fixed top-5 right-5 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl transition-all duration-300 transform translate-y-[-150%] opacity-0 pointer-events-none">
+    <i id="toast-icon" class="ph-bold ph-check-circle text-2xl"></i>
+    <div id="toast-message" class="text-sm font-semibold tracking-wide"></div>
+  </div>
+
+  <section id="login-screen" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950 px-4 py-8" role="dialog" aria-modal="true" aria-labelledby="login-title">
+    <div class="w-full max-w-md space-y-6 rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-2xl sm:p-8">
+      <div class="text-center">
+        <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-amber-500 via-orange-600 to-rose-600 shadow-lg shadow-orange-600/30">
+          <i class="ph-fill ph-paint-roller text-3xl text-white"></i>
+        </div>
+        <h1 id="login-title" class="text-2xl font-bold text-white">Floor Paint Pro</h1>
+        <p class="mt-2 text-sm text-slate-400">Firebase ගිණුමෙන් පුරනය වන්න</p>
+      </div>
+
+      <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label for="login-email" class="mb-1.5 block text-xs font-semibold text-slate-300">ඊමේල් ලිපිනය (Firebase Username)</label>
+          <input required type="email" id="login-email" autocomplete="username" inputmode="email" class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500">
+        </div>
+        <div>
+          <label for="login-password" class="mb-1.5 block text-xs font-semibold text-slate-300">මුරපදය (Password)</label>
+          <input required type="password" id="login-password" autocomplete="current-password" class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500">
+        </div>
+        <p id="login-error" class="hidden rounded-xl border border-rose-500/30 bg-rose-950/40 px-3 py-2 text-sm text-rose-300" role="alert"></p>
+        <p id="login-status" class="text-xs text-slate-400" aria-live="polite">Firebase සම්බන්ධතාවය පරීක්ෂා කරමින්...</p>
+        <button type="submit" id="login-submit" disabled class="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 px-4 py-3 font-semibold text-white transition hover:from-orange-500 hover:to-amber-500 disabled:cursor-not-allowed disabled:opacity-50">
+          <i class="ph-bold ph-sign-in text-lg"></i> පුරනය වන්න
+        </button>
+      </form>
+
+      <div class="space-y-2 border-t border-slate-800 pt-4 text-center">
+        <p class="text-xs text-slate-500">Firebase Authentication හි කලින් සාදන ලද Email/Password ගිණුම භාවිතා කරන්න.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Header & Live Cloud Status Bar -->
+  <header inert aria-hidden="true" class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-lg border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Brand Logo & Live Mode Indicator -->
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 via-orange-600 to-rose-600 flex items-center justify-center shadow-lg shadow-orange-600/30">
+          <i class="ph-fill ph-paint-roller text-2xl text-white"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white">Focal</h1>
+            <span id="cloud-status-badge" class="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">
+              <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+              <span id="cloud-status-text">Cloud සම්බන්ධ වෙමින්...</span>
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">බිම තීන්ත ආලේපන ඇණවුම් සහ ක්ෂේත්‍ර මෙහෙයුම් පද්ධතිය</p>
+        </div>
+      </div>
+
+      <!-- Action & Config Controls -->
+      <div class="flex items-center gap-2">
+        <span id="signed-in-user" class="hidden text-xs text-slate-400 sm:inline"></span>
+        <button type="button" onclick="handleLogout()" class="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-700">
+          <i class="ph-bold ph-sign-out"></i> ඉවත් වන්න
+        </button>
+        <!-- Navigation Tabs -->
+        <nav class="flex items-center bg-slate-800/80 p-1 rounded-2xl border border-slate-700/60 overflow-x-auto">
+          <button onclick="switchTab('page-new')" id="tab-btn-page-new" class="tab-button flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 text-white bg-gradient-to-r from-orange-600 to-amber-600 shadow-md">
+            <i class="ph-bold ph-plus-circle text-base"></i>
+            <span>නව ඇණවුම</span>
+          </button>
+          <button onclick="switchTab('page-manage')" id="tab-btn-page-manage" class="tab-button flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 text-slate-400 hover:text-slate-200">
+            <i class="ph-bold ph-pencil-simple-line text-base"></i>
+            <span>දත්ත කළමනාකරණය</span>
+            <span id="badge-total-jobs" class="text-[10px] bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded-full">0</span>
+          </button>
+          <button onclick="switchTab('page-schedule')" id="tab-btn-page-schedule" class="tab-button flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 text-slate-400 hover:text-slate-200">
+            <i class="ph-bold ph-calendar-check text-base"></i>
+            <span>කාලසටහන</span>
+            <span id="badge-urgent-jobs" class="text-[10px] bg-rose-500/20 text-rose-300 px-1.5 py-0.5 rounded-full font-bold">0</span>
+          </button>
+        </nav>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Viewports -->
+  <main inert aria-hidden="true" class="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6 lg:p-8">
+
+    <!-- PAGE 1: NEW JOB REGISTRATION -->
+    <section id="page-new" class="page-content">
+      <div class="max-w-3xl mx-auto">
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-800 pb-4">
+          <div>
+            <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+              <i class="ph-fill ph-phone-call text-orange-500"></i>
+              නව පාරිභෝගික ඇමතුම / ඇණවුම ලියාපදිංචිය
+            </h2>
+            <p class="text-sm text-slate-400 mt-1">පාරිභෝගිකයා අමතන අවස්ථාවේදී මෙම සියලු විස්තර Cloud වෙත සුරකින්න.</p>
+          </div>
+        </div>
+
+        <form id="new-job-form" onsubmit="handleCreateJob(event)" class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            
+            <!-- 1. Customer Name -->
+            <div class="space-y-1.5">
+              <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                1. පාරිභෝගිකයාගේ නම (Customer Name) <span class="text-orange-500">*</span>
+              </label>
+              <div class="relative">
+                <i class="ph-bold ph-user absolute left-3.5 top-3.5 text-slate-500 text-lg"></i>
+                <input required type="text" id="cust-name" placeholder="උදා: නිමල් වික්‍රමසිංහ" 
+                  class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition">
+              </div>
+            </div>
+
+            <!-- 2. Phone Number -->
+            <div class="space-y-1.5">
+              <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                2. දුරකථන අංකය (Phone Number) <span class="text-orange-500">*</span>
+              </label>
+              <div class="relative">
+                <i class="ph-bold ph-phone absolute left-3.5 top-3.5 text-slate-500 text-lg"></i>
+                <input required type="tel" id="cust-phone" placeholder="077 123 4567" 
+                  class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition">
+              </div>
+            </div>
+
+            <!-- Email (for Google Calendar & invites) -->
+            <div class="space-y-1.5 md:col-span-2">
+              <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                පාරිභෝගිකයාගේ ඊමේල් ලිපිනය (Email Address - Google Calendar ආරාධනා සදහා)
+              </label>
+              <div class="relative">
+                <i class="ph-bold ph-envelope absolute left-3.5 top-3.5 text-slate-500 text-lg"></i>
+                <input type="email" id="cust-email" placeholder="customer@example.com" 
+                  class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition">
+              </div>
+            </div>
+
+            <!-- 3. Address -->
+            <div class="space-y-1.5 md:col-span-2">
+              <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                3. ලිපිනය සහ නගරය (Job Address / Location) <span class="text-orange-500">*</span>
+              </label>
+              <div class="relative">
+                <i class="ph-bold ph-map-pin absolute left-3.5 top-3.5 text-slate-500 text-lg"></i>
+                <input required type="text" id="cust-address" placeholder="නො. 14, ගාලු පාර, කළුතර" 
+                  class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition">
+              </div>
+            </div>
+
+            <!-- 4. Square Feet Area -->
+            <div class="space-y-1.5">
+              <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                4. වර්ග අඩි ප්‍රමාණය (Area - Sq Ft) <span class="text-orange-500">*</span>
+              </label>
+              <div class="relative">
+                <i class="ph-bold ph-bounding-box absolute left-3.5 top-3.5 text-slate-500 text-lg"></i>
+                <input required type="number" min="1" id="cust-sqft" placeholder="උදා: 1500" 
+                  class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition">
+              </div>
+            </div>
+
+            <!-- 5. Scheduled Date & Time -->
+            <div class="space-y-1.5">
+              <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                5. යා යුතු දිනය සහ වේලාව (Visit Date & Time) <span class="text-orange-500">*</span>
+              </label>
+              <div class="relative">
+                <i class="ph-bold ph-calendar-plus absolute left-3.5 top-3.5 text-slate-500 text-lg"></i>
+                <input required type="datetime-local" id="cust-date" 
+                  class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition">
+              </div>
+            </div>
+
+            <!-- 6. Total Price -->
+            <div class="space-y-1.5">
+              <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                6. සම්පූර්ණ මිල (Total Price - LKR) <span class="text-orange-500">*</span>
+              </label>
+              <div class="relative">
+                <span class="absolute left-3.5 top-3.5 text-slate-500 font-bold text-sm">රු.</span>
+                <input required type="number" min="0" step="100" id="cust-total" placeholder="95000" oninput="calculateBalance()"
+                  class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition">
+              </div>
+            </div>
+
+            <!-- 7. Advance Payment -->
+            <div class="space-y-1.5">
+              <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                7. පෙර ගෙවීම් (Advance Payment - LKR)
+              </label>
+              <div class="relative">
+                <span class="absolute left-3.5 top-3.5 text-slate-500 font-bold text-sm">රු.</span>
+                <input type="number" min="0" step="100" id="cust-advance" placeholder="30000" oninput="calculateBalance()"
+                  class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-sm text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition">
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Remaining Balance Display Box -->
+          <div class="bg-slate-950/90 border border-slate-800 rounded-2xl p-4 flex items-center justify-between shadow-inner">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <i class="ph-bold ph-receipt text-xl"></i>
+              </div>
+              <div>
+                <div class="text-xs text-slate-400">ඉතිරි ගෙවිය යුතු මුදල (Balance Due)</div>
+                <div id="display-balance" class="text-xl font-extrabold text-emerald-400">රු. 0.00</div>
+              </div>
+            </div>
+            <span class="text-xs text-slate-500 hidden sm:inline">ස්වයංක්‍රීය ගණනය (Total - Advance)</span>
+          </div>
+
+          <!-- Additional Notes -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              විශේෂ සටහන් (Epoxy Brand / Color / Priming / Floor Details)
+            </label>
+            <textarea id="cust-notes" rows="2" placeholder="උදා: 3mm Epoxy self-leveling, Dark Grey, Primer coat required on ground floor..." 
+              class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition"></textarea>
+          </div>
+
+          <!-- Form Action Buttons -->
+          <div class="flex flex-col sm:flex-row gap-3 pt-2">
+            <button type="submit" id="save-job-btn" class="flex-1 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-orange-600/30 flex items-center justify-center gap-2 transition duration-200 active:scale-[0.99]">
+              <i class="ph-bold ph-cloud-arrow-up text-xl"></i>
+              <span>Cloud එකට සුරකින්න (Save to Cloud)</span>
+            </button>
+            <button type="reset" onclick="setTimeout(calculateBalance, 50)" class="px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-semibold transition">
+              මකන්න (Clear)
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- PAGE 2: EDIT & MANAGE JOBS -->
+    <section id="page-manage" class="page-content hidden">
+      <div class="space-y-6">
+        
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+          <div>
+            <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+              <i class="ph-fill ph-note-pencil text-orange-500"></i>
+              ඇණවුම් කළමනාකරණය සහ දත්ත වෙනස් කිරීම (Edit)
+            </h2>
+            <p class="text-sm text-slate-400 mt-1">Phone එකෙන් හෝ Computer එකෙන් ඇතුළත් කළ ඕනෑම ඇණවුමක දත්ත මෙතැනින් සංස්කරණය කළ හැක.</p>
+          </div>
+          
+          <div class="flex items-center gap-2">
+            <button onclick="refreshData()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 flex items-center gap-1.5 border border-slate-700 transition">
+              <i class="ph-bold ph-arrows-clockwise text-sm"></i>
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="relative sm:col-span-2">
+            <i class="ph-bold ph-magnifying-glass absolute left-3.5 top-3 text-slate-500 text-lg"></i>
+            <input type="text" id="manage-search" oninput="renderJobsTable()" placeholder="පාරිභෝගික නම, දුරකථනය, හෝ ලිපිනය අනුව සොයන්න..."
+              class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-11 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+          </div>
+          <div>
+            <select id="manage-filter-status" onchange="renderJobsTable()" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-300 focus:outline-none focus:border-orange-500">
+              <option value="ALL">සියලු තත්වයන් (All Status)</option>
+              <option value="SCHEDULED">නියමිතයි (Scheduled)</option>
+              <option value="IN_PROGRESS">කරමින් පවතී (In Progress)</option>
+              <option value="COMPLETED">අවසන් (Completed)</option>
+              <option value="CANCELLED">අවලංගුයි (Cancelled)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Jobs Table Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-300">
+              <thead class="bg-slate-950/80 border-b border-slate-800 text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                <tr>
+                  <th class="px-4 py-3.5">පාරිභෝගිකයා</th>
+                  <th class="px-4 py-3.5">ස්ථානය / ලිපිනය</th>
+                  <th class="px-4 py-3.5">වර්ග අඩි</th>
+                  <th class="px-4 py-3.5">මිල ගණන් (LKR)</th>
+                  <th class="px-4 py-3.5">යායුතු දිනය</th>
+                  <th class="px-4 py-3.5">තත්ත්වය</th>
+                  <th class="px-4 py-3.5 text-right">ක්‍රියාමාර්ග</th>
+                </tr>
+              </thead>
+              <tbody id="manage-table-body" class="divide-y divide-slate-800/70">
+                <!-- Injected via Realtime Firestore Data -->
+              </tbody>
+            </table>
+          </div>
+
+          <div id="manage-empty-state" class="hidden p-12 text-center">
+            <i class="ph-thin ph-clipboard-text text-5xl text-slate-600 mb-2"></i>
+            <p class="text-slate-400 text-sm font-medium">ඇණවුම් කිසිවක් හමු නොවීය.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- PAGE 3: SMART SCHEDULE & GOOGLE CALENDAR -->
+    <section id="page-schedule" class="page-content hidden">
+      <div class="space-y-8">
+        
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+          <div>
+            <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+              <i class="ph-fill ph-calendar-star text-orange-500"></i>
+              යායුතු දිනයන් සහ ස්මාර්ට් කාලසටහන
+            </h2>
+            <p class="text-sm text-slate-400 mt-1">
+              අද සහ හෙට දිනයේ යායුතු ස්ථාන ඉහළින්ම ප්‍රමුඛතාවය අනුව පෙන්නුම් කරන අතර, Google Calendar වෙතද කෙලින්ම ඇතුළත් කළ හැක.
+            </p>
+          </div>
+          
+          <div class="bg-slate-900 border border-slate-800 px-4 py-2.5 rounded-2xl flex items-center gap-3">
+            <i class="ph-bold ph-calendar text-orange-400 text-xl"></i>
+            <div>
+              <div class="text-[10px] uppercase text-slate-400 font-semibold tracking-wider">වර්තමාන දිනය</div>
+              <div id="live-date-header" class="text-xs font-bold text-white"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Priority 1: Today & Tomorrow Urgent Section -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 text-rose-400">
+              <i class="ph-fill ph-lightning text-2xl"></i>
+              <h3 class="font-bold text-lg text-white">අද සහ හෙට දිනයේ යායුතු ස්ථාන (Today & Tomorrow Priority)</h3>
+            </div>
+            <span class="text-xs bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2.5 py-0.5 rounded-full font-semibold">ඉහළම ප්‍රමුඛතාවය</span>
+          </div>
+          <div id="urgent-jobs-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Priority 2: Upcoming Future Jobs Section -->
+        <div class="space-y-4 pt-4 border-t border-slate-800/80">
+          <div class="flex items-center gap-2 text-amber-400">
+            <i class="ph-fill ph-calendar-check text-2xl"></i>
+            <h3 class="font-bold text-lg text-white">ඉදිරි දින වලට යායුතු ස්ථාන (Upcoming Days Ahead)</h3>
+          </div>
+          <div id="upcoming-jobs-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Priority 3: Completed or Past Jobs -->
+        <div class="space-y-4 pt-4 border-t border-slate-800/80">
+          <details class="group bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden">
+            <summary class="flex items-center justify-between p-4 cursor-pointer text-slate-400 font-semibold hover:text-slate-200 transition">
+              <span class="flex items-center gap-2">
+                <i class="ph-bold ph-clock-counter-clockwise text-lg"></i>
+                පසුගිය හෝ අවසන් කරන ලද ඇණවුම් (Completed / Past Jobs)
+              </span>
+              <i class="ph-bold ph-caret-down group-open:rotate-180 transition-transform"></i>
+            </summary>
+            <div id="past-jobs-grid" class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 border-t border-slate-800 bg-slate-950/40">
+              <!-- Dynamically populated -->
+            </div>
+          </details>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- EDIT JOB MODAL -->
+  <div id="edit-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-2xl w-full p-6 sm:p-8 max-h-[92vh] overflow-y-auto shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+          <i class="ph-bold ph-note-pencil text-orange-400"></i>
+          ඇණවුමේ විස්තර සංස්කරණය (Edit Job)
+        </h3>
+        <button onclick="closeEditModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <form id="edit-form" onsubmit="handleSaveEdit(event)" class="space-y-4">
+        <input type="hidden" id="edit-id">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">පාරිභෝගිකයාගේ නම</label>
+            <input required type="text" id="edit-name" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">දුරකථන අංකය</label>
+            <input required type="tel" id="edit-phone" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">ඊමේල් ලිපිනය (Email - Google Calendar)</label>
+          <input type="email" id="edit-email" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">ලිපිනය (Location / Address)</label>
+          <input required type="text" id="edit-address" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">වර්ග අඩි ප්‍රමාණය</label>
+            <input required type="number" id="edit-sqft" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">යායුතු දිනය සහ වේලාව</label>
+            <input required type="datetime-local" id="edit-date" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">සම්පූර්ණ මිල (LKR)</label>
+            <input required type="number" id="edit-total" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">පෙර ගෙවීම් (Advance - LKR)</label>
+            <input type="number" id="edit-advance" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">තත්ත්වය (Job Status)</label>
+          <select id="edit-status" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+            <option value="SCHEDULED">නියමිතයි (Scheduled)</option>
+            <option value="IN_PROGRESS">කරමින් පවතී (In Progress)</option>
+            <option value="COMPLETED">අවසන් (Completed)</option>
+            <option value="CANCELLED">අවලංගුයි (Cancelled)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">සටහන් (Notes)</label>
+          <textarea id="edit-notes" rows="2" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-orange-500"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+          <button type="button" onclick="closeEditModal()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-semibold transition">
+            අවලංගු කරන්න
+          </button>
+          <button type="submit" class="px-6 py-2.5 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-semibold rounded-xl text-sm shadow-md transition">
+            Cloud එකේ සුරකින්න
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- FIREBASE CONFIG MODAL -->
+  <div id="config-modal" class="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <i class="ph-bold ph-cloud text-orange-400 text-xl"></i>
+          Firebase Cloud Sync සැකසුම් (Settings)
+        </h3>
+        <button onclick="closeConfigModal()" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs text-slate-300 leading-relaxed">
+        <div class="p-4 bg-slate-950/80 rounded-2xl border border-slate-800">
+          <p class="font-semibold text-orange-400 mb-1 flex items-center gap-1.5">
+            <i class="ph-bold ph-info"></i> Phone එකෙන් සහ PC එකෙන් එකවර සම්බන්ධ වීමට:
+          </p>
+          <ol class="list-decimal pl-4 space-y-1 text-slate-400 mt-2">
+            <li><a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" class="text-blue-400 underline">console.firebase.google.com</a> වෙත ගොස් ඔබේ Firebase Project එක තෝරන්න.</li>
+            <li><strong>Cloud Firestore</strong> Database එකක් ආරම්භ කරන්න.</li>
+            <li>Authentication &gt; Sign-in method හි <strong>Email/Password</strong> සක්‍රිය කර ඔබේ පරිශීලක ගිණුම සාදන්න.</li>
+            <li>Project Settings &gt; General &gt; Your Apps වෙතින් ලබාගන්නා <code>firebaseConfig</code> JSON කේතය පහත paste කරන්න.</li>
+            <li>Firestore Rules හි පහත path එක සහ ඔබේ Firebase පරිශීලක UID එක භාවිතා කරන්න:</li>
+          </ol>
+          <pre class="mt-3 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900 p-3 text-[10px] leading-relaxed text-slate-300"><code>match /artifacts/floor-paint-pro/public/data/painting_jobs/{jobId} {
+  allow read, write: if request.auth != null
+    &amp;&amp; request.auth.uid == "YOUR_USER_UID";
+}</code></pre>
+          <p class="mt-2 text-[11px] text-slate-500">YOUR_USER_UID වෙනුවට Authentication &gt; Users හි ඔබේ UID එක යොදන්න. Firebase Console හි Firestore Rules වෙත මෙය ඇතුළත් කර Publish කරන්න.</p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Google OAuth Client ID</label>
+          <input type="text" id="google-calendar-client-id" placeholder="1234567890-abc.apps.googleusercontent.com" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-orange-500">
+          <p class="text-[11px] text-slate-500 mt-1">Google Cloud Console හි Calendar API සක්‍රිය කර OAuth Web Client ID එකක් සාදන්න. මෙම app එක localhost web server එකකින් විවෘත කළ යුතුය; file:// URL එකකින් OAuth ක්‍රියා නොකරයි.</p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+          <button onclick="connectGoogleCalendar()" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition">
+            Google Calendar සම්බන්ධ කර Sync කරන්න
+          </button>
+          <button onclick="disconnectGoogleCalendar()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 px-4 rounded-xl text-xs transition">
+            Google වෙතින් ඉවත් වන්න
+          </button>
+          <span id="google-calendar-status" class="text-xs text-slate-400">Google සම්බන්ධ කර නැත</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">ඔබේ Firebase Config එක මෙතැනට Paste කරන්න (JSON හෝ JS Object)</label>
+          <textarea id="firebase-config-input" rows="7" placeholder='{
+  "apiKey": "AIzaSy...",
+  "authDomain": "myproject.firebaseapp.com",
+  "projectId": "myproject",
+  "storageBucket": "myproject.appspot.com",
+  "messagingSenderId": "...",
+  "appId": "..."
+}' class="w-full bg-slate-950 font-mono text-[11px] border border-slate-700 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-orange-500"></textarea>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-2 pt-2">
+          <button onclick="saveFirebaseConfig()" class="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition">
+            Cloud Config සුරකින්න
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIREBASE MODULAR SDK LOADER SCRIPT -->
+  <script type="module" src="./firebase.js"></script>
+
+  <!-- APP VIEW LOGIC & SCRIPTS -->
+  <script src="./app.js"></script>
+</body>
+</html>
