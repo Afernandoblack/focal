@@ -392,6 +392,22 @@
           </details>
         </div>
 
+        <!-- Cancelled Jobs -->
+        <div class="space-y-4 pt-4 border-t border-slate-800/80">
+          <details open class="group bg-slate-900/60 border border-rose-900/60 rounded-2xl overflow-hidden">
+            <summary class="flex items-center justify-between p-4 cursor-pointer text-rose-300 font-semibold hover:text-rose-200 transition">
+              <span class="flex items-center gap-2">
+                <i class="ph-bold ph-x-circle text-lg"></i>
+                අවලංගු කරන ලද ඇණවුම් (Cancelled Jobs)
+              </span>
+              <i class="ph-bold ph-caret-down group-open:rotate-180 transition-transform"></i>
+            </summary>
+            <div id="cancelled-jobs-grid" class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 border-t border-slate-800 bg-slate-950/40">
+              <!-- Dynamically populated -->
+            </div>
+          </details>
+        </div>
+
       </div>
     </section>
 

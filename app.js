@@ -268,10 +268,12 @@ window.jobsState = [];
       const urgentGrid = document.getElementById('urgent-jobs-grid');
       const upcomingGrid = document.getElementById('upcoming-jobs-grid');
       const pastGrid = document.getElementById('past-jobs-grid');
+      const cancelledGrid = document.getElementById('cancelled-jobs-grid');
 
       urgentGrid.innerHTML = '';
       upcomingGrid.innerHTML = '';
       pastGrid.innerHTML = '';
+      cancelledGrid.innerHTML = '';
 
       const list = window.jobsState || [];
       const now = new Date();
@@ -284,12 +286,16 @@ window.jobsState = [];
       let urgentCount = 0;
       let upcomingCount = 0;
       let pastCount = 0;
+      let cancelledCount = 0;
 
       sorted.forEach(job => {
         const jDate = new Date(job.scheduledDate);
         const card = createJobCard(job, jDate, startOfToday, endOfTomorrow);
 
-        if (jDate < startOfToday && job.status === 'COMPLETED') {
+        if (job.status === 'CANCELLED') {
+          cancelledGrid.appendChild(card);
+          cancelledCount++;
+        } else if (job.status === 'COMPLETED') {
           pastGrid.appendChild(card);
           pastCount++;
         } else if (jDate >= startOfToday && jDate < endOfTomorrow) {
@@ -316,6 +322,9 @@ window.jobsState = [];
       }
       if (pastCount === 0) {
         pastGrid.innerHTML = `<div class="col-span-full p-6 text-center text-slate-500 text-sm">පසුගිය ඇණවුම් කිසිවක් නැත.</div>`;
+      }
+      if (cancelledCount === 0) {
+        cancelledGrid.innerHTML = `<div class="col-span-full p-6 text-center text-slate-500 text-sm">අවලංගු කළ ඇණවුම් කිසිවක් නැත.</div>`;
       }
     }
 
