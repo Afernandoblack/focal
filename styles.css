@@ -3,3 +3,175 @@
     ::-webkit-scrollbar-track { background: #090d16; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
     ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+.manage-jobs-table {
+  min-width: 850px;
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  .dashboard-header-inner {
+    align-items: center;
+  }
+
+  header .dashboard-header-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .dashboard-nav {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .dashboard-main {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 639px) {
+  .dashboard-header-inner {
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .dashboard-brand {
+    min-width: 0;
+  }
+
+  .dashboard-brand > div:last-child {
+    min-width: 0;
+  }
+
+  .dashboard-brand > div:last-child > div {
+    flex-wrap: wrap;
+    gap: 0.25rem 0.5rem;
+  }
+
+  .dashboard-brand > div:last-child > p {
+    display: none;
+  }
+
+  #cloud-status-badge {
+    max-width: 100%;
+    padding: 0.15rem 0.45rem;
+    font-size: 0.625rem;
+  }
+
+  #cloud-status-text {
+    overflow-wrap: anywhere;
+  }
+
+  header .dashboard-header-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 100%;
+  }
+
+  header .dashboard-header-controls > nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    justify-content: space-between;
+    overflow-x: auto;
+  }
+
+  .dashboard-nav > button {
+    flex: 1 1 0;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.5rem 0.4rem;
+    font-size: 0.7rem;
+    min-width: 0;
+  }
+
+  .dashboard-nav > button > span:not(#badge-total-jobs):not(#badge-urgent-jobs) {
+    display: none;
+  }
+
+  .dashboard-main {
+    padding: 0.875rem;
+  }
+
+  .dashboard-main h2 {
+    font-size: 1.25rem;
+    line-height: 1.6rem;
+  }
+
+  #new-job-form {
+    padding: 1rem;
+    border-radius: 1.25rem;
+  }
+
+  #new-job-form > .grid {
+    gap: 1rem;
+  }
+
+  #display-balance {
+    font-size: 1.125rem;
+  }
+
+  #manage-search,
+  #manage-filter-status {
+    min-height: 2.75rem;
+  }
+
+  #manage-table-body td,
+  #manage-table-body th {
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+  }
+
+  #edit-modal,
+  #config-modal {
+    align-items: flex-start;
+    overflow-y: auto;
+    padding: 0.75rem;
+  }
+
+  #edit-modal > div,
+  #config-modal > div {
+    max-height: calc(100dvh - 1.5rem);
+    padding: 1rem;
+    border-radius: 1.25rem;
+  }
+
+  #toast {
+    top: max(0.75rem, env(safe-area-inset-top));
+    right: 0.75rem;
+    left: 0.75rem;
+    justify-content: flex-start;
+    padding: 0.75rem 1rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .dashboard-nav > button {
+    padding-right: 0.25rem;
+    padding-left: 0.25rem;
+    font-size: 0.625rem;
+  }
+
+  header .dashboard-header-controls > button {
+    padding-right: 0.6rem;
+    padding-left: 0.6rem;
+  }
+}
