@@ -313,6 +313,7 @@ window.jobsState = [];
       });
 
       document.getElementById('badge-urgent-jobs').innerText = urgentCount;
+      document.getElementById('badge-cancelled-jobs').innerText = cancelledCount;
 
       if (urgentCount === 0) {
         urgentGrid.innerHTML = `<div class="col-span-full p-6 text-center bg-slate-900/40 rounded-2xl border border-slate-800 text-slate-500 text-sm">අද හෝ හෙට දිනට නියමිත කිසිදු ඇණවුමක් නැත.</div>`;
@@ -324,7 +325,7 @@ window.jobsState = [];
         pastGrid.innerHTML = `<div class="col-span-full p-6 text-center text-slate-500 text-sm">පසුගිය ඇණවුම් කිසිවක් නැත.</div>`;
       }
       if (cancelledCount === 0) {
-        cancelledGrid.innerHTML = `<div class="col-span-full p-6 text-center text-slate-500 text-sm">අවලංගු කළ ඇණවුම් කිසිවක් නැත.</div>`;
+        cancelledGrid.innerHTML = `<div class="col-span-full rounded-2xl border border-slate-800 bg-slate-900/40 p-6 text-center text-sm text-slate-500">අවලංගු කළ ඇණවුම් කිසිවක් නැත.</div>`;
       }
     }
 
